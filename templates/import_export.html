@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Import & Export - ExpenseMate{% endblock %}
+
+{% block page_title %}Import & Export Data{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="glass-card">
+        <div class="card-header">
+            <h2 class="card-title">Export Data</h2>
+        </div>
+        <div>
+            <p class="mb-4 text-secondary">Download your data as CSV files for backup or analysis in other tools.</p>
+            <div class="form-actions" style="flex-direction: column;">
+                <a href="{{ url_for('export_expenses') }}" class="btn btn-primary" style="justify-content: flex-start;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Export Expenses (CSV)
+                </a>
+                <a href="{{ url_for('export_income') }}" class="btn btn-success" style="justify-content: flex-start;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Export Income (CSV)
+                </a>
+                <a href="{{ url_for('export_budgets_csv_route') }}" class="btn btn-warning" style="justify-content: flex-start;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Export Budgets (CSV)
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-header">
+            <h2 class="card-title">Import Data</h2>
+        </div>
+        <div>
+            <form action="{{ url_for('import_expenses') }}" method="POST" enctype="multipart/form-data" class="mb-4 pb-3" style="border-bottom: 1px solid var(--glass-border);">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <h3 class="mb-4">Import Expenses</h3>
+                <div class="file-dropzone" tabindex="0" role="button" aria-label="Upload Expenses CSV">
+                    <input type="file" name="file" accept=".csv" required style="display: none;" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--color-primary)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-bottom: 10px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <p>Click or drag CSV file here</p>
+                    <div class="file-info"></div>
+                </div>
+                <small class="mb-4 mt-3" style="display: block; color: var(--color-text-secondary);">Required columns: amount, category, description, date, payment_method, currency</small>
+                <button type="submit" class="btn btn-primary btn-sm">Upload Expenses CSV</button>
+            </form>
+            
+            <form action="{{ url_for('import_income') }}" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <h3 class="mb-4">Import Income</h3>
+                <div class="file-dropzone" tabindex="0" role="button" aria-label="Upload Income CSV">
+                    <input type="file" name="file" accept=".csv" required style="display: none;" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--color-success)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-bottom: 10px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <p>Click or drag CSV file here</p>
+                    <div class="file-info"></div>
+                </div>
+                <small class="mb-4 mt-3" style="display: block; color: var(--color-text-secondary);">Required columns: amount, category, description, date, source, currency</small>
+                <button type="submit" class="btn btn-success btn-sm">Upload Income CSV</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="card-header">
+            <h2 class="card-title" style="color: var(--color-info);">Sample Data</h2>
+        </div>
+        <div>
+            <p class="mb-4 text-secondary">Load demo data to test the application. This will add sample expenses, income, and budgets.</p>
+            <form action="{{ url_for('load_sample') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-info">Load Sample Data</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="glass-card" style="border-left: 4px solid var(--color-danger);">
+        <div class="card-header">
+            <h2 class="card-title" style="color: var(--color-danger);">Danger Zone</h2>
+        </div>
+        <div>
+            <p class="mb-4 text-secondary">Resetting the database will delete all your data permanently. This action cannot be undone.</p>
+            <form action="{{ url_for('reset_db') }}" method="POST" class="delete-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="button" class="btn btn-danger" data-action="delete">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    Reset Database
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

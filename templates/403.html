@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Forbidden - ExpenseMate{% endblock %}
+{% block page_title %}Request Rejected{% endblock %}
+{% block content %}
+<div class="glass-card empty-state">
+    <div class="empty-state-icon" aria-hidden="true">🔒</div>
+    <h2>Request Rejected</h2>
+    <p>Your request could not be verified.</p>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
+</div>
+{% endblock %}

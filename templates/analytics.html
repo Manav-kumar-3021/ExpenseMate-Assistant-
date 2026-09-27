@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics - ExpenseMate{% endblock %}
+
+{% block page_title %}Analytics{% endblock %}
+
+{% block extra_head %}{% endblock %}
+
+{% block content %}
+<div class="filter-section glass-card analytics-filter-panel">
+    <form action="{{ url_for('analytics_page') }}" method="GET" class="filter-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="month">Month</label>
+                <select name="month" id="month" class="form-control">
+                    <option value="" {% if not month %}selected{% endif %}>All Year</option>
+                    {% for m_val, m_name in months %}
+                    <option value="{{ m_val }}" {% if month|string == m_val|string %}selected{% endif %}>{{ m_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="year">Year</label>
+                <select name="year" id="year" class="form-control" min="2000" max="2100" inputmode="numeric">
+                    {% for y in years %}
+                    <option value="{{ y }}" {% if year|string == y|string %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="currency">Currency</label>
+                <select name="currency" id="currency" class="form-control">
+                    {% for curr in currencies %}
+                    <option value="{{ curr }}" {% if currency == curr %}selected{% endif %}>{{ curr }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <noscript>
+            <button type="submit" class="btn btn-primary mt-3">Filter</button>
+        </noscript>
+    </form>
+</div>
+
+<section class="analytics-kpi-grid mb-4" aria-label="Financial summary">
+    <div class="stat-card expense">
+        <h2 class="card-title">Total Expenses</h2>
+        <div class="card-value">{{ currency }} {{ "%.2f"|format(analytics_data.total_expenses|float) }}</div>
+    </div>
+    <div class="stat-card income">
+        <h2 class="card-title">Total Income</h2>
+        <div class="card-value">{{ currency }} {{ "%.2f"|format(analytics_data.total_income|float) }}</div>
+    </div>
+    <div class="stat-card balance">
+        <h2 class="card-title">Balance</h2>
+        <div class="card-value">{{ currency }} {{ "%.2f"|format(analytics_data.balance|float) }}</div>
+    </div>
+    <div class="stat-card warning">
+        <h2 class="card-title">Highest Expense</h2>
+        <div class="card-value">{{ currency }} {{ "%.2f"|format(analytics_data.highest_expense|float) }}</div>
+    </div>
+    <div class="stat-card">
+        <h2 class="card-title">Average Expense</h2>
+        <div class="card-value">{{ currency }} {{ "%.2f"|format(analytics_data.average_expense|float) }}</div>
+    </div>
+    <div class="stat-card">
+        <h2 class="card-title">Transactions</h2>
+        <div class="card-value count-value">{{ analytics_data.transaction_count }}</div>
+    </div>
+    <div class="stat-card expense">
+        <h2 class="card-title">Highest Sp. Category</h2>
+        <div class="card-value">{{ analytics_data.highest_spending_category }}</div>
+    </div>
+</section>
+
+<div class="analytics-context" role="status">
+    <span class="analytics-context-dot" aria-hidden="true"></span>
+    <span><strong>{{ currency }}</strong> • {{ "Selected month" if month else "Full year" }} • {{ year }}</span>
+    <span class="analytics-context-note">All figures are calculated from stored transactions; no currency conversion is applied.</span>
+</div>
+
+<div class="charts-grid analytics-charts">
+    <div class="chart-container analytics-chart-card">
+        <div class="chart-heading"><div><span class="chart-kicker">SPENDING MIX</span><h3>Expenses by Category</h3></div><span class="chart-badge">{{ currency }}</span></div>
+        <div id="expenseByCategoryChart" class="chart-viz" role="img" aria-label="Expenses by category chart"></div>
+    </div>
+    <div class="chart-container analytics-chart-card">
+        <div class="chart-heading"><div><span class="chart-kicker">OUTFLOW</span><h3 id="monthlyExpensesTitle">Monthly Expenses</h3></div><span class="chart-badge">{{ currency }}</span></div>
+        <div id="monthlyExpensesChart" class="chart-viz" role="img" aria-label="Monthly expenses chart"></div>
+    </div>
+    <div class="chart-container analytics-chart-card">
+        <div class="chart-heading"><div><span class="chart-kicker">INFLOW</span><h3 id="monthlyIncomeTitle">Monthly Income</h3></div><span class="chart-badge">{{ currency }}</span></div>
+        <div id="monthlyIncomeChart" class="chart-viz" role="img" aria-label="Monthly income chart"></div>
+    </div>
+    <div class="chart-container analytics-chart-card analytics-chart-wide">
+        <div class="chart-heading"><div><span class="chart-kicker">CASH FLOW</span><h3 id="incomeVsExpenseTitle">Income vs Expenses</h3></div><span class="chart-badge">{{ currency }}</span></div>
+        <div id="incomeVsExpenseChart" class="chart-viz" role="img" aria-label="Income versus expenses chart"></div>
+    </div>
+</div>
+
+<script type="application/json" id="analytics-data" data-selected-month="{{ month }}" data-selected-year="{{ year }}" data-currency="{{ currency }}">{{ analytics_data | tojson }}</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}

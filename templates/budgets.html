@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Budgets - ExpenseMate{% endblock %}
+{% block page_title %}Budgets{% endblock %}
+
+{% block content %}
+<div class="filter-section glass-card">
+    <form action="{{ url_for('budgets_page') }}" method="GET" class="filter-form">
+        <div class="form-group">
+            <label for="month">Month</label>
+            <select name="month" id="month" class="form-control">
+                <option value="" {% if not filter_month %}selected{% endif %}>All Months</option>
+                {% for m_val, m_name in months %}
+                <option value="{{ m_val }}" {% if filter_month|string == m_val|string %}selected{% endif %}>{{ m_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="year">Year</label>
+            <select name="year" id="year" class="form-control">
+                <option value="" {% if not filter_year %}selected{% endif %}>All Years</option>
+                {% for y in years %}
+                <option value="{{ y }}" {% if filter_year|string == y|string %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="currency">Currency</label>
+            <select name="currency" id="currency" class="form-control">
+                <option value="" {% if not filter_currency %}selected{% endif %}>All Currencies</option>
+                {% for curr in currencies %}
+                <option value="{{ curr }}" {% if filter_currency == curr %}selected{% endif %}>{{ curr }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group" style="display: flex; gap: 8px;">
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{{ url_for('budgets_page') }}" class="btn btn-secondary">Clear</a>
+        </div>
+    </form>
+</div>
+
+<div class="glass-card mb-4">
+    <div class="card-header"><h2 class="card-title">Add Budget</h2></div>
+    <div>
+        <form action="{{ url_for('add_budget') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-row align-items-end">
+                <div class="form-group">
+                    <label for="category_id">Category *</label>
+                    <select name="category_id" id="category_id" class="form-control" required>
+                        <option value="">Select Category</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Amount *</label>
+                    <input type="number" step="0.01" min="0.01" max="99999999.99" inputmode="decimal" name="amount" id="amount" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="month_add">Month *</label>
+                    <select name="month" id="month_add" class="form-control" required>
+                        {% for m_val, m_name in months %}
+                        <option value="{{ m_val }}" {% if current_month == m_val %}selected{% endif %}>{{ m_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="year_add">Year *</label>
+                    <select name="year" id="year_add" class="form-control" required>
+                        {% for y in years %}
+                        <option value="{{ y }}" {% if current_year == y %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="currency_add">Currency *</label>
+                    <select name="currency" id="currency_add" class="form-control" required>
+                        {% for curr in currencies %}
+                        <option value="{{ curr }}" {% if (filter_currency or 'PKR') == curr %}selected{% endif %}>{{ curr }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="alert_percentage">Alert %</label>
+                    <input type="number" step="0.01" min="1" max="100" name="alert_percentage" id="alert_percentage" class="form-control" value="80" required>
+                </div>
+                <div class="form-group" style="flex: 0 0 auto;">
+                    <button type="submit" class="btn btn-primary">Add Budget</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="stats-grid">
+    {% for b in budgets %}
+    <div class="glass-card" style="margin-bottom: 0;">
+        <h3 style="margin-top: 0; color: var(--color-text-primary); font-size: 1.2rem;">{{ b.category_name }}</h3>
+        <p style="color: var(--color-text-secondary); font-size: 0.9rem; margin-top: -8px;">{{ b.month }}/{{ b.year }} - {{ b.currency }}</p>
+        <div style="font-size: 1.8rem; font-weight: 700; margin: 12px 0;">{{ "%.2f"|format(b.amount|float) }}</div>
+
+        <div class="budget-status">
+            <p style="font-size: 0.85rem; color: var(--color-text-secondary); margin-bottom: 8px;">Spent: {{ "%.2f"|format(b.spent|float) }} | Remaining: {{ "%.2f"|format(b.remaining|float) }}</p>
+            {% set width = b.percentage_used if b.percentage_used <= 100 else 100 %}
+            <div class="progress" aria-label="Budget progress">
+                <div class="progress-bar {% if b.status == 'Safe' %}status-safe{% elif b.status == 'Warning' %}status-warning{% else %}status-exceeded{% endif %}" style="width: {{ width }}%;" aria-valuenow="{{ width }}" aria-valuemin="0" aria-valuemax="100" role="progressbar">{{ "%.1f"|format(b.percentage_used|float) }}%</div>
+            </div>
+            <p style="margin-top: 8px;"><span class="badge {% if b.status == 'Safe' %}status-safe{% elif b.status == 'Warning' %}status-warning{% else %}status-exceeded{% endif %}">Status: {{ b.status }}</span></p>
+        </div>
+
+        <div class="actions" style="margin-top: 16px;">
+            <details>
+                <summary class="btn btn-sm btn-secondary" style="list-style: none; display: inline-flex; cursor: pointer;">Edit</summary>
+                <div style="margin-top: 16px; border-top: 1px solid var(--glass-border); padding-top: 16px;">
+                    <form action="{{ url_for('edit_budget', id=b.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="category_id" value="{{ b.category_id }}">
+                        <div class="form-row budget-editor-row">
+                            <div class="form-group">
+                                <label for="amount-{{ b.id }}">Amount *</label>
+                                <input type="number" step="0.01" min="0.01" max="99999999.99" inputmode="decimal" id="amount-{{ b.id }}" name="amount" class="form-control" value="{{ b.amount }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="month-{{ b.id }}">Month *</label>
+                                <select id="month-{{ b.id }}" name="month" class="form-control" required>
+                                    {% for m_val, m_name in months %}
+                                    <option value="{{ m_val }}" {% if b.month == m_val %}selected{% endif %}>{{ m_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="year-{{ b.id }}">Year *</label>
+                                <select id="year-{{ b.id }}" name="year" class="form-control" required>
+                                    {% for y in years %}
+                                    <option value="{{ y }}" {% if b.year == y %}selected{% endif %}>{{ y }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="currency-{{ b.id }}">Currency *</label>
+                                <select id="currency-{{ b.id }}" name="currency" class="form-control" required>
+                                    {% for curr in currencies %}
+                                    <option value="{{ curr }}" {% if b.currency == curr %}selected{% endif %}>{{ curr }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="alert_percentage-{{ b.id }}">Alert % *</label>
+                                <input type="number" step="0.01" min="1" max="100" id="alert_percentage-{{ b.id }}" name="alert_percentage" class="form-control" value="{{ b.alert_percentage }}" required>
+                            </div>
+                        </div>
+                        <div class="actions mt-3">
+                            <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </details>
+            <form action="{{ url_for('delete_budget_route', id=b.id) }}" method="POST" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="button" class="btn btn-sm btn-danger" data-action="delete" data-delete-message="Delete this budget? This action cannot be undone.">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-icon" aria-hidden="true">🎯</div>
+        <p>No budgets found for this period.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

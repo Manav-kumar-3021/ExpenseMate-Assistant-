@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - ExpenseMate{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<section class="finance-hero formal-console" aria-labelledby="financeHeroTitle">
+    <div class="finance-hero-copy">
+        <div class="hero-eyebrow"><span></span> EXPENSEMATE / FINANCE OPERATIONS</div>
+        <h2 id="financeHeroTitle">Financial control.<br><strong>Clear. Measurable. Local.</strong></h2>
+        <p>Monitor cash flow, budget position, and transaction activity from one structured finance workspace.</p>
+        <div class="hero-chip-row">
+            <span class="hero-chip">SQLITE LEDGER</span>
+            <span class="hero-chip">LIVE TOTALS</span>
+            <span class="hero-chip">VALIDATED DATA</span>
+        </div>
+    </div>
+    <div class="finance-hero-orbit formal-console-visual" aria-hidden="true">
+        <div class="console-shadow-layer"></div>
+        <div class="console-sheet console-sheet-back"></div>
+        <div class="console-sheet console-sheet-mid"></div>
+        <div class="console-panel">
+            <div class="console-panel-top"><span>FINANCE CORE</span><span>ONLINE</span></div>
+            <div class="console-panel-value">EM</div>
+            <div class="console-panel-label">EXPENSEMATE LEDGER</div>
+            <div class="console-panel-track"><span></span></div>
+            <div class="console-panel-meta"><span>INPUT</span><span>OUTPUT</span><span>PLAN</span></div>
+        </div>
+        <div class="console-rail console-rail-a">IN</div>
+        <div class="console-rail console-rail-b">OUT</div>
+        <div class="console-rail console-rail-c">PLAN</div>
+    </div>
+</section>
+<div class="filter-section glass-card">
+    <form class="filter-form" method="GET" action="{{ url_for('dashboard') }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="month">Month</label>
+                <select name="month" id="month" class="form-control">
+                    
+                    {% for m_num, m_name in months %}
+                        <option value="{{ m_num }}" {% if month|string == m_num|string %}selected{% endif %}>{{ m_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="year">Year</label>
+                <select name="year" id="year" class="form-control" min="2000" max="2100" inputmode="numeric">
+                    {% for y in range(current_year - 5, current_year + 5) %}
+                        <option value="{{ y }}" {% if year|string == y|string %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="currency">Currency</label>
+                <select name="currency" id="currency" class="form-control">
+                    {% for c in currencies %}
+                        <option value="{{ c }}" {% if currency == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        Apply filters using the selectors; JavaScript submits them automatically.
+        <noscript>
+            <button type="submit" class="btn btn-primary mt-3">Filter</button>
+        </noscript>
+    </form>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card income">
+        <h2 class="card-title">Total Income</h2>
+        <div class="card-value">{{ currency }} {{ "%.2f"|format(dashboard_data.total_income|float) }}</div>
+    </div>
+    <div class="stat-card expense">
+        <h2 class="card-title">Total Expenses</h2>
+        <div class="card-value">{{ currency }} {{ "%.2f"|format(dashboard_data.total_expenses|float) }}</div>
+    </div>
+    <div class="stat-card balance">
+        <h2 class="card-title">Balance</h2>
+        <div class="card-value">{{ currency }} {{ "%.2f"|format(dashboard_data.balance|float) }}</div>
+    </div>
+    <div class="stat-card">
+        <h2 class="card-title">Total Budget</h2>
+        <div class="card-value">{{ currency }} {{ "%.2f"|format(dashboard_data.total_budget|float) }}</div>
+    </div>
+    <div class="stat-card">
+        <h2 class="card-title">Budget Spent</h2>
+        <div class="card-value">{{ currency }} {{ "%.2f"|format(dashboard_data.total_spent|float) }}</div>
+    </div>
+    <div class="stat-card">
+        <h2 class="card-title">Expense Count</h2>
+        <div class="card-value count-value">{{ dashboard_data.expense_count }}</div>
+    </div>
+    <div class="stat-card">
+        <h2 class="card-title">Income Count</h2>
+        <div class="card-value count-value">{{ dashboard_data.income_count }}</div>
+    </div>
+</div>
+
+{% if dashboard_data.alerts %}
+<div class="glass-card mb-4">
+    <div class="card-header">
+        <h2 class="card-title" style="color: var(--color-warning);">Budget Alerts</h2>
+    </div>
+    <div>
+        {% for alert in dashboard_data.alerts %}
+            <div class="toast toast-{% if alert.status == 'Exceeded' %}danger{% else %}warning{% endif %}" style="position: static; margin-bottom: 12px; animation: none; transform: none; min-width: auto; box-shadow: none; border-radius: 8px; border-left-width: 4px;">
+                <strong>{{ alert.category_name }}</strong>: You have spent {{ currency }} {{ "%.2f"|format(alert.spent|float) }} of {{ currency }} {{ "%.2f"|format(alert.budget_amount|float) }} ({{ "%.1f"|format(alert.percentage_used|float) }}%). Status: {{ alert.status }}.
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="glass-card">
+    <div class="card-header">
+        <h2 class="card-title">Budget Status</h2>
+    </div>
+    <div class="stats-grid">
+        {% if dashboard_data.budgets_with_status %}
+            {% for b in dashboard_data.budgets_with_status %}
+                <div class="stat-card {% if b.status == 'Safe' %}income{% elif b.status == 'Warning' %}warning{% else %}expense{% endif %}">
+                    <h3 class="card-title">{{ b.category_name }} - {{ b.currency }} {{ "%.2f"|format(b.amount|float) }}</h3>
+                    <p style="font-size: 0.9rem; color: var(--color-text-secondary); margin-bottom: 8px;">Spent: {{ b.currency }} {{ "%.2f"|format(b.spent|float) }} | Remaining: {{ b.currency }} {{ "%.2f"|format(b.remaining|float) }}</p>
+                    <div class="progress">
+                        <div class="progress-bar {% if b.status == 'Safe' %}status-safe{% elif b.status == 'Warning' %}status-warning{% else %}status-exceeded{% endif %}" style="width: {{ [b.percentage_used|float, 100]|min }}%;" aria-valuenow="{{ [b.percentage_used|float, 100]|min }}" aria-valuemin="0" aria-valuemax="100" role="progressbar">{{ "%.1f"|format(b.percentage_used|float) }}%</div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <div class="empty-state-icon" aria-hidden="true">📊</div>
+                <p>No budgets found for this period.</p>
+                <div class="empty-state-action">
+                    <a href="{{ url_for('budgets_page') }}" class="btn btn-primary">+ Create Budget</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
